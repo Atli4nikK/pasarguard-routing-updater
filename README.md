@@ -1,7 +1,7 @@
 # routing-updater для PasarGuard
 
 Свежий routing-профиль и geo-базы (`geosite.dat`, `geoip.dat`) для клиентов **Happ**,
-**INCY** и **FixErrorVPN** на официальной PasarGuard, без патчей панели. Порт идеи
+**INCY** на официальной PasarGuard, без патчей панели. Порт идеи
 [remnawave-routing-updater](https://github.com/3APA3A-3AHO3A/remnawave-routing-updater)
 (MIT) с Remnawave на API PasarGuard. Нужен только Python 3.8+ (stdlib) и systemd.
 
