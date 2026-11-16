@@ -81,15 +81,6 @@ CLIENTS = {
         "autorouting": True,
         "create": True,
     },
-    # Правило под FixErrorVPN владелец создаёт сам (нужен свой target под ядро), мы только
-    # обновляем найденное.
-    "fixerrorvpn": {
-        "scheme": "fixerrorvpn",
-        "sample_ua": "Xray-core/25.10.15 FixErrorVPN/1.0 (Windows)",
-        "pattern": None,
-        "autorouting": True,
-        "create": False,
-    },
 }
 # User-Agent, который не похож ни на один клиент: правило, совпавшее с ним, — catch-all.
 UNKNOWN_UA = "zz-routing-updater-probe/0"
