@@ -145,7 +145,11 @@ class Config:
         self.scan_client_templates = _bool(e.get("RU_SCAN_CLIENT_TEMPLATES"), True)
         self.extra_geosite = {c.upper() for c in _words(e.get("RU_EXTRA_GEOSITE"))}
         self.extra_geoip = {c.upper() for c in _words(e.get("RU_EXTRA_GEOIP"))}
-        self.autorouting = _bool(e.get("RU_AUTOROUTING"), True)
+        # false — только routing; true — routing + autorouting (INCY покажет два профиля);
+        # only — клиентам с autorouting (INCY, FixErrorVPN) только autorouting, без routing.
+        mode = (e.get("RU_AUTOROUTING") or "").strip().lower()
+        self.autorouting_only = mode == "only"
+        self.autorouting = self.autorouting_only or _bool(mode, False)
         self.create_missing = _bool(e.get("RU_CREATE_MISSING_RULES"), True)
         self.timeout = int(e.get("RU_TIMEOUT") or 60)
         self.keep_backups = int(e.get("RU_KEEP_BACKUPS") or 20)
@@ -448,9 +452,15 @@ def encode_profile(profile):
     return base64.b64encode(raw).decode("ascii")
 
 
-def build_headers(client, b64, autorouting_url):
-    """Заголовки, которые должны стоять в правиле клиента, и заголовки, которые надо убрать."""
+def build_headers(client, b64, autorouting_url, autorouting_only=False):
+    """Заголовки, которые должны стоять в правиле клиента, и заголовки, которые надо убрать.
+
+    autorouting_only: клиенту с autorouting отдать только его (профиль по ссылке с
+    автообновлением, `onadd` — сразу активируется), а `routing` убрать.
+    """
     meta = CLIENTS[client]
+    if autorouting_only and meta["autorouting"] and autorouting_url:
+        return {"autorouting": f"{meta['scheme']}://autorouting/onadd/{autorouting_url}"}, ["routing"]
     want = {"routing": f"{meta['scheme']}://routing/onadd/{b64}"}
     remove = []
     if meta["autorouting"]:
@@ -587,7 +597,7 @@ def run(cfg, apply=True, log=print, now=None):
     template["LastUpdated"] = last_updated
     b64 = encode_profile(template)
     autorouting_url = f"{cfg.public_base}/routing.json" if (cfg.mirror and cfg.autorouting) else ""
-    links = {c: build_headers(c, b64, autorouting_url) for c in cfg.clients}
+    links = {c: build_headers(c, b64, autorouting_url, cfg.autorouting_only) for c in cfg.clients}
 
     new_sub = copy.deepcopy(sub)
     summary = sync_rules(new_sub["rules"], links, cfg.create_missing)
